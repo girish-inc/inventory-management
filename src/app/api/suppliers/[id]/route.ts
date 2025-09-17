@@ -18,16 +18,19 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   try {
     const [supplier] = await sql`UPDATE suppliers SET name=${name}, contact_email=${contactEmail}, phone=${phone}, updated_at=now() WHERE id=${id} RETURNING *`;
     return NextResponse.json(supplier);
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return NextResponse.json({ error: message }, { status: 400 });
   }
 }
 
 export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
   const id = params.id;
   const sql = getDb();
-  const result = await sql`DELETE FROM suppliers WHERE id=${id}`;
-  if ((result as any).count === 0) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  const [{ count }] = await sql<{ count: number }[]>`WITH del AS (
+    DELETE FROM suppliers WHERE id=${id} RETURNING 1
+  ) SELECT COUNT(*)::int AS count FROM del`;
+  if (count === 0) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   return new NextResponse(null, { status: 204 });
 }
 

@@ -65,7 +65,8 @@ export async function POST() {
         (${product2.id}, ${supplier1.id}),
         (${product5.id}, ${supplier1.id}),
         (${product3.id}, ${supplier2.id}),
-        (${product4.id}, ${supplier2.id})
+        (${product4.id}, ${supplier2.id}),
+        (${product4.id}, ${supplier3.id})
     `;
 
     await sql`
@@ -89,7 +90,8 @@ export async function POST() {
       products: 5,
       transactions: 10
     });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

@@ -23,8 +23,9 @@ export async function POST(req: NextRequest) {
   try {
     const [supplier] = await sql`INSERT INTO suppliers (name, contact_email, phone) VALUES (${name}, ${contactEmail}, ${phone}) RETURNING *`;
     return NextResponse.json(supplier, { status: 201 });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return NextResponse.json({ error: message }, { status: 400 });
   }
 }
 

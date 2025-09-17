@@ -9,6 +9,8 @@ const txSchema = z.object({
   unitPrice: z.number().nonnegative(),
 });
 
+type QtyRow = { quantity: number };
+
 export async function GET() {
   const sql = getDb();
   const rows = await sql`SELECT * FROM transactions ORDER BY created_at DESC`;
@@ -22,9 +24,8 @@ export async function POST(req: NextRequest) {
   const { productId, type, quantity, unitPrice } = parsed.data;
   const sql = getDb();
   try {
-    // Update stock atomically
     const sign = type === 'purchase' ? 1 : -1;
-    const [p] = await sql`SELECT quantity FROM products WHERE id=${productId}`;
+    const [p] = await sql<QtyRow[]>`SELECT quantity FROM products WHERE id=${productId}`;
     if (!p) return NextResponse.json({ error: 'Product not found' }, { status: 404 });
     const newQty = Number(p.quantity ?? 0) + sign * quantity;
     if (newQty < 0) return NextResponse.json({ error: 'Insufficient stock' }, { status: 400 });
@@ -34,8 +35,9 @@ export async function POST(req: NextRequest) {
                            RETURNING *`;
     await sql`UPDATE products SET quantity=${newQty}, updated_at=now() WHERE id=${productId}`;
     return NextResponse.json(tx, { status: 201 });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return NextResponse.json({ error: message }, { status: 400 });
   }
 }
 

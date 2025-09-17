@@ -2,6 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
 import { z } from 'zod';
 
+type ProductRow = {
+  id: string;
+  name: string;
+  sku: string;
+  quantity: number;
+  unit_price: number;
+  created_at: string;
+  updated_at: string;
+};
+
 const productSchema = z.object({
   name: z.string().min(1),
   sku: z.string().min(1),
@@ -12,7 +22,7 @@ const productSchema = z.object({
 
 export async function GET() {
   const sql = getDb();
-  const rows = await sql`SELECT p.*, COALESCE(json_agg(ps.supplier_id) FILTER (WHERE ps.supplier_id IS NOT NULL), '[]') AS supplier_ids
+  const rows = await sql<ProductRow[]>`SELECT p.*, COALESCE(json_agg(ps.supplier_id) FILTER (WHERE ps.supplier_id IS NOT NULL), '[]') AS supplier_ids
                          FROM products p
                          LEFT JOIN product_suppliers ps ON ps.product_id = p.id
                          GROUP BY p.id
@@ -27,7 +37,7 @@ export async function POST(req: NextRequest) {
   const { name, sku, quantity, unitPrice, supplierIds } = parsed.data;
   const sql = getDb();
   try {
-    const [product] = await sql`INSERT INTO products (name, sku, quantity, unit_price)
+    const [product] = await sql<ProductRow[]>`INSERT INTO products (name, sku, quantity, unit_price)
                                 VALUES (${name}, ${sku}, ${quantity}, ${unitPrice})
                                 RETURNING *`;
     if (supplierIds && supplierIds.length) {
@@ -36,8 +46,9 @@ export async function POST(req: NextRequest) {
       )}`;
     }
     return NextResponse.json(product, { status: 201 });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return NextResponse.json({ error: message }, { status: 400 });
   }
 }
 

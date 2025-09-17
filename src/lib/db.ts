@@ -1,9 +1,9 @@
 import 'server-only';
 import { neon, type NeonQueryFunction } from '@neondatabase/serverless';
 
-let cachedClient: NeonQueryFunction<any[]> | null = null;
+let cachedClient: NeonQueryFunction<Record<string, unknown>[]> | null = null;
 
-export function getDb(): NeonQueryFunction<any[]> {
+export function getDb(): NeonQueryFunction<Record<string, unknown>[]> {
   const connectionString = process.env.DATABASE_URL || process.env.NEON_DATABASE_URL;
   if (!connectionString) {
     throw new Error('DATABASE_URL is not set');
@@ -14,7 +14,7 @@ export function getDb(): NeonQueryFunction<any[]> {
   return cachedClient;
 }
 
-export async function withTransaction<T>(fn: (sql: NeonQueryFunction<any[]>) => Promise<T>): Promise<T> {
+export async function withTransaction<T>(fn: (sql: NeonQueryFunction<Record<string, unknown>[]>) => Promise<T>): Promise<T> {
   const sql = getDb();
   await sql`BEGIN`;
   try {

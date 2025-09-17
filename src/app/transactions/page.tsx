@@ -4,10 +4,12 @@ import { useEffect, useState } from 'react';
 type Product = { id: string; name: string };
 type Tx = { id: string; type: 'purchase' | 'sale'; quantity: number; unit_price: number; created_at: string };
 
+type TxType = 'purchase' | 'sale';
+
 export default function TransactionsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [txs, setTxs] = useState<Tx[]>([]);
-  const [form, setForm] = useState({ productId: '', type: 'purchase' as 'purchase' | 'sale', quantity: 1, unitPrice: 0 });
+  const [form, setForm] = useState<{ productId: string; type: TxType; quantity: number; unitPrice: number }>({ productId: '', type: 'purchase', quantity: 1, unitPrice: 0 });
 
   async function refresh() {
     const [pRes, tRes] = await Promise.all([fetch('/api/products'), fetch('/api/transactions')]);
@@ -45,7 +47,7 @@ export default function TransactionsPage() {
               <label className="block text-sm font-medium text-gray-700 mb-1">Transaction Type</label>
               <select 
                 value={form.type} 
-                onChange={e=>setForm({ ...form, type: e.target.value as any })} 
+                onChange={e=>setForm({ ...form, type: e.target.value as TxType })} 
                 className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
               >
                 <option value="purchase">📦 Purchase (Add Stock)</option>

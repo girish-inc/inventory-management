@@ -105,7 +105,7 @@ export default function DashboardPage() {
             <div>
               <h3 className="text-lg font-semibold text-yellow-900">No data found</h3>
               <p className="text-base text-yellow-800 mt-2">
-                Click "Seed Sample Data" to populate the system with sample products, suppliers, and transactions.
+                Click &quot;Seed Sample Data&quot; to populate the system with sample products, suppliers, and transactions.
               </p>
             </div>
           </div>
