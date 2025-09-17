@@ -41,8 +41,9 @@ export async function POST(req: NextRequest) {
                                 VALUES (${name}, ${sku}, ${quantity}, ${unitPrice})
                                 RETURNING *`;
     if (supplierIds && supplierIds.length) {
-      const tuples = supplierIds.map((sid) => [product.id, sid]);
-      await sql`INSERT INTO product_suppliers (product_id, supplier_id) VALUES ${sql(tuples)}`;
+      for (const supplierId of supplierIds) {
+        await sql`INSERT INTO product_suppliers (product_id, supplier_id) VALUES (${product.id}, ${supplierId})`;
+      }
     }
     return NextResponse.json(product, { status: 201 });
   } catch (error: unknown) {
