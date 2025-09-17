@@ -21,7 +21,8 @@ export async function POST(req: NextRequest) {
   const { name, contactEmail, phone } = parsed.data;
   const sql = getDb();
   try {
-    const [supplier] = await sql`INSERT INTO suppliers (name, contact_email, phone) VALUES (${name}, ${contactEmail}, ${phone}) RETURNING *`;
+    const rows = await sql`INSERT INTO suppliers (name, contact_email, phone) VALUES (${name}, ${contactEmail}, ${phone}) RETURNING *` as unknown as Array<Record<string, unknown>>;
+    const supplier = rows[0] ?? null;
     return NextResponse.json(supplier, { status: 201 });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
