@@ -8,8 +8,8 @@ const supplierSchema = z.object({
   phone: z.string().optional().nullable(),
 });
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
-  const id = params.id;
+export async function PUT(req: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params;
   const body = await req.json();
   const parsed = supplierSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ errors: parsed.error.flatten() }, { status: 400 });
@@ -24,8 +24,8 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
-  const id = params.id;
+export async function DELETE(_req: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params;
   const sql = getDb();
   const [{ count }] = await sql<{ count: number }[]>`WITH del AS (
     DELETE FROM suppliers WHERE id=${id} RETURNING 1
