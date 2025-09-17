@@ -35,9 +35,10 @@ export async function PUT(req: NextRequest, context: unknown) {
 export async function DELETE(_req: NextRequest, context: unknown) {
   const { id } = (context as { params: { id: string } }).params;
   const sql = getDb();
-  const [{ count }] = await sql<{ count: number }[]>`WITH del AS (
+  const rows = await sql`WITH del AS (
     DELETE FROM products WHERE id=${id} RETURNING 1
-  ) SELECT COUNT(*)::int AS count FROM del`;
+  ) SELECT COUNT(*)::int AS count FROM del` as unknown as Array<{ count: number }>;
+  const count = rows[0]?.count ?? 0;
   if (count === 0) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   return new NextResponse(null, { status: 204 });
 }
