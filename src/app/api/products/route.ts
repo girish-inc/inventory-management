@@ -23,9 +23,10 @@ export async function POST(req: NextRequest) {
   const { name, sku, quantity, unitPrice, supplierIds } = parsed.data;
   const sql = getDb();
   try {
-    const [product] = await sql`INSERT INTO products (name, sku, quantity, unit_price)
+    const inserted = await sql`INSERT INTO products (name, sku, quantity, unit_price)
                                 VALUES (${name}, ${sku}, ${quantity}, ${unitPrice})
-                                RETURNING *`;
+                                RETURNING *` as unknown as Array<Record<string, unknown>>;
+    const product = inserted[0] as Record<string, unknown> & { id: string };
     if (supplierIds && supplierIds.length) {
       for (const supplierId of supplierIds) {
         await sql`INSERT INTO product_suppliers (product_id, supplier_id) VALUES (${product.id}, ${supplierId})`;

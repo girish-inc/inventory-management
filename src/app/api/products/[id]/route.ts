@@ -18,7 +18,8 @@ export async function PUT(req: NextRequest, context: unknown) {
   const { name, sku, quantity, unitPrice, supplierIds } = parsed.data;
   const sql = getDb();
   try {
-    const [product] = await sql`UPDATE products SET name=${name}, sku=${sku}, quantity=${quantity}, unit_price=${unitPrice}, updated_at=now() WHERE id=${id} RETURNING *`;
+    const updatedRows = await sql`UPDATE products SET name=${name}, sku=${sku}, quantity=${quantity}, unit_price=${unitPrice}, updated_at=now() WHERE id=${id} RETURNING *` as unknown as Array<Record<string, unknown>>;
+    const product = updatedRows[0] ?? null;
     await sql`DELETE FROM product_suppliers WHERE product_id=${id}`;
     if (supplierIds && supplierIds.length) {
       for (const supplierId of supplierIds) {
