@@ -16,7 +16,8 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
   const { name, contactEmail, phone } = parsed.data;
   const sql = getDb();
   try {
-    const [supplier] = await sql`UPDATE suppliers SET name=${name}, contact_email=${contactEmail}, phone=${phone}, updated_at=now() WHERE id=${id} RETURNING *`;
+    const rows = await sql`UPDATE suppliers SET name=${name}, contact_email=${contactEmail}, phone=${phone}, updated_at=now() WHERE id=${id} RETURNING *` as unknown as Array<Record<string, unknown>>;
+    const supplier = rows[0] ?? null;
     return NextResponse.json(supplier);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
@@ -27,9 +28,10 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
 export async function DELETE(_req: NextRequest, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;
   const sql = getDb();
-  const [{ count }] = await sql<{ count: number }[]>`WITH del AS (
+  const rows = await sql`WITH del AS (
     DELETE FROM suppliers WHERE id=${id} RETURNING 1
-  ) SELECT COUNT(*)::int AS count FROM del`;
+  ) SELECT COUNT(*)::int AS count FROM del` as unknown as Array<{ count: number }>;
+  const count = rows[0]?.count ?? 0;
   if (count === 0) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   return new NextResponse(null, { status: 204 });
 }

@@ -9,8 +9,6 @@ const txSchema = z.object({
   unitPrice: z.number().nonnegative(),
 });
 
-type QtyRow = { quantity: number };
-
 export async function GET() {
   const sql = getDb();
   const rows = await sql`SELECT * FROM transactions ORDER BY created_at DESC`;
@@ -25,14 +23,16 @@ export async function POST(req: NextRequest) {
   const sql = getDb();
   try {
     const sign = type === 'purchase' ? 1 : -1;
-    const [p] = await sql<QtyRow[]>`SELECT quantity FROM products WHERE id=${productId}`;
+    const qtyRows = await sql`SELECT quantity FROM products WHERE id=${productId}` as unknown as Array<{ quantity: number }>;
+    const p = qtyRows[0];
     if (!p) return NextResponse.json({ error: 'Product not found' }, { status: 404 });
     const newQty = Number(p.quantity ?? 0) + sign * quantity;
     if (newQty < 0) return NextResponse.json({ error: 'Insufficient stock' }, { status: 400 });
 
-    const [tx] = await sql`INSERT INTO transactions (product_id, type, quantity, unit_price)
+    const txRows = await sql`INSERT INTO transactions (product_id, type, quantity, unit_price)
                            VALUES (${productId}, ${type}, ${quantity}, ${unitPrice})
-                           RETURNING *`;
+                           RETURNING *` as unknown as Array<Record<string, unknown>>;
+    const tx = txRows[0];
     await sql`UPDATE products SET quantity=${newQty}, updated_at=now() WHERE id=${productId}`;
     return NextResponse.json(tx, { status: 201 });
   } catch (error: unknown) {

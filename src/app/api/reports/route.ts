@@ -14,7 +14,8 @@ export async function GET(req: NextRequest) {
   }
 
   if (report === 'inventory-value') {
-    const [row] = await sql`SELECT COALESCE(SUM(quantity * unit_price), 0) AS total FROM products`;
+    const rows = await sql`SELECT COALESCE(SUM(quantity * unit_price), 0) AS total FROM products` as unknown as Array<{ total: number }>;
+    const row = rows[0] ?? { total: 0 };
     return NextResponse.json({ total: row.total });
   }
 
