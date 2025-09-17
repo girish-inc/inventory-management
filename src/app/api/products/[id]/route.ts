@@ -10,8 +10,8 @@ const productSchema = z.object({
   supplierIds: z.array(z.string().uuid()).optional().default([]),
 });
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
-  const id = params.id;
+export async function PUT(req: NextRequest, context: unknown) {
+  const { id } = (context as { params: { id: string } }).params;
   const body = await req.json();
   const parsed = productSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ errors: parsed.error.flatten() }, { status: 400 });
@@ -32,8 +32,8 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
-  const id = params.id;
+export async function DELETE(_req: NextRequest, context: unknown) {
+  const { id } = (context as { params: { id: string } }).params;
   const sql = getDb();
   const [{ count }] = await sql<{ count: number }[]>`WITH del AS (
     DELETE FROM products WHERE id=${id} RETURNING 1
